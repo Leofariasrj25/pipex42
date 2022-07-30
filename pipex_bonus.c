@@ -1,22 +1,22 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   pipex.c                                            :+:      :+:    :+:   */
+/*   pipex_bonus.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: lfarias- <lfarias-@student.42.rio>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2022/07/06 22:41:39 by lfarias-          #+#    #+#             */
-/*   Updated: 2022/07/30 13:49:20 by lfarias-         ###   ########.fr       */
+/*   Created: 2022/07/30 04:00:44 by lfarias-          #+#    #+#             */
+/*   Updated: 2022/07/30 13:47:03 by lfarias-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "libft/libft.h"
-#include "pipex.h"
-#include "error_handler.h"
-#include "file_handler.h"
-#include "path_builder.h"
-#include "args_parser.h"
-#include "resource_cleaner.h"
+#include "pipex_bonus.h"
+#include "error_handler_bonus.h"
+#include "file_handler_bonus.h"
+#include "path_builder_bonus.h"
+#include "args_parser_bonus.h"
+#include "resource_cleaner_bonus.h"
 #include <fcntl.h>
 #include <stdio.h>
 
@@ -88,7 +88,7 @@ void	exec_cmd_chain(int **pipes, char **args_list, char **env, int size)
 	char	**cmd;
 	char	*aux;
 
-	i = 2;
+	i = 0;
 	pipe_id = 0;
 	while (pipe_id < size)
 	{
@@ -107,24 +107,26 @@ void	exec_cmd_chain(int **pipes, char **args_list, char **env, int size)
 int	main(int argc, char *argv[])
 {
 	int			**pipes_fd;
+	int			arg_i;
 	int			fd_infile;
 	extern char	**environ;
 
 	if (argc == 1)
 		return (0);
-	pipes_fd = create_pipes(argc - 2);
-	fd_infile = 3;
-	if (check_infile_error(argv[1]) == 0)
-	{
+	fd_infile = here_doc_parser(argv);
+	arg_i = 3;
+	if (fd_infile != -1)
+		arg_i++;
+	if (fd_infile == -1 && check_infile_error(argv[1]) == 0)
 		fd_infile = open(argv[1], O_RDONLY);
-		dup2(fd_infile, pipes_fd[0][0]);
-		close(fd_infile);
-		close(pipes_fd[0][1]);
-	}
-	exec_cmd_chain(pipes_fd, argv, environ, argc - 3);
-	close(pipes_fd[argc - 3][1]);
-	write_to_outfile(argv[argc - 1], pipes_fd[argc - 3][0]);
-	close(pipes_fd[argc - 3][0]);
+	pipes_fd = create_pipes((argc - arg_i) + 1);
+	dup2(fd_infile, pipes_fd[0][0]);
+	close(pipes_fd[0][1]);
+	exec_cmd_chain(pipes_fd, &argv[arg_i - 1], environ, argc - arg_i);
+	close(pipes_fd[argc - arg_i][1]);
+	write_to_outfile(argv[argc - 1], pipes_fd[argc - arg_i][0], arg_i);
+	close(pipes_fd[argc - arg_i][0]);
 	free_pipes(pipes_fd);
+	close(fd_infile);
 	exit(0);
 }
