@@ -6,7 +6,7 @@
 /*   By: lfarias- <lfarias-@student.42.rio>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/07/06 22:41:39 by lfarias-          #+#    #+#             */
-/*   Updated: 2022/07/30 13:49:20 by lfarias-         ###   ########.fr       */
+/*   Updated: 2022/07/30 14:57:07 by lfarias-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -113,13 +113,17 @@ int	main(int argc, char *argv[])
 	if (argc == 1)
 		return (0);
 	pipes_fd = create_pipes(argc - 2);
-	fd_infile = 3;
+	fd_infile = open(argv[1], O_RDONLY);
 	if (check_infile_error(argv[1]) == 0)
 	{
-		fd_infile = open(argv[1], O_RDONLY);
 		dup2(fd_infile, pipes_fd[0][0]);
 		close(fd_infile);
 		close(pipes_fd[0][1]);
+	}
+	else
+	{
+		argc--;
+		argv++;
 	}
 	exec_cmd_chain(pipes_fd, argv, environ, argc - 3);
 	close(pipes_fd[argc - 3][1]);
